@@ -28,6 +28,7 @@
       <p style="color: red; font-size: 1.5em;" v-if="showAdded">ADDED STOP</p>
     </div>
     <script>
+      const storagePrefix = "wandern.coordinates.";
       const gmaps = "https://www.google.com/maps/dir";
       const currentRouteName = "Current Route"; // key fuer aktuell entstehende route
       new Vue({
@@ -54,33 +55,37 @@
           },
           addCurLocation() {
             navigator.geolocation.getCurrentPosition((position) => {
-              let oldPart = localStorage.getItem(currentRouteName) == null ? "" : localStorage.getItem(currentRouteName);
+              let key = storagePrefix + currentRouteName;
+              let oldPart = localStorage.getItem(key) == null ? "" : localStorage.getItem(key);
               let coordinates = position.coords.latitude + "," + position.coords.longitude;
               this.currentRoute = oldPart + "/" + coordinates;
-              localStorage.setItem(currentRouteName, this.currentRoute);
+              localStorage.setItem(key, this.currentRoute);
               this.showAdded = true;
               setTimeout(() => (this.showAdded = false), 2000);
             });
           },
           saveRoute() {
-            localStorage.setItem(this.routeName, this.currentRoute);
+            localStorage.setItem(storagePrefix + this.routeName, this.currentRoute);
             this.currentRoute = "";
-            localStorage.removeItem(currentRouteName);
+            localStorage.removeItem(storagePrefix + currentRouteName);
             this.loadRoutesFromLocalStorage();
           },
           deleteRoute(item, index) {
             if (confirm("Route " + item.k + " wirklich löschen?")) {
               this.prev.splice(index, 1);
-              localStorage.removeItem(item.k);
+              localStorage.removeItem(storagePrefix + item.k);
             }
           },
           loadRoutesFromLocalStorage() {
             this.prev = [];
             Object.keys(localStorage).map((k) => {
-              if (k == currentRouteName) {
-                this.currentRoute = localStorage.getItem(k);
-              } else {
-                this.prev.push({ k: k, v: localStorage.getItem(k) });
+              if (k.startsWith(storagePrefix)) {
+                let kSub = k.substring(storagePrefix.length);
+                if (kSub == currentRouteName) {
+                  this.currentRoute = localStorage.getItem(k);
+                } else {
+                  this.prev.push({ k: kSub, v: localStorage.getItem(k) });
+                }
               }
             });
           },
