@@ -1,20 +1,48 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <title>Routenplaner</title>
+  </head>
   <body>
-    <p><a href="https://www.gpsvisualizer.com/convert_input">GPS Visualizer</a></p>
-    <p>Route</p>
-    <p id="cur"></p>
+    <h1>Tools</h1>
+    <p>
+      <a href="https://www.gpsvisualizer.com/convert_input">GPS Visualizer</a>
+    </p>
+
+    <h1>Routes</h1>
+    <button onclick="addCurLocation()">Add Location</button>
+    <div>Current Route:</div>
+    <div id="prev"></div>
+    <div id="cur"></div>
+    <label for="routename">Route Name:</label>
+    <input type="text" id="routename" />
+    <button onclick="saveRoute()">Save Route</button>
     <script>
-      window.onload = function () {
-        localStorage.getItem("route");
-        navigator.geolocation.getCurrentPosition((position) => {
-          let oldPart = localStorage.getItem("route") == null ? "" : localStorage.getItem("route");
-          let newPart = oldPart + "/" + position.coords.latitude + "," + position.coords.longitude;
-          let url = "https://www.google.com/maps/dir/" + newPart;
-          document.getElementById("cur").innerHTML = '<a href="' + url + '">GPS Visualizer</a>';
-          localStorage.setItem("route", newPart);
+      let newPart;
+      const tmpRoute = "activeRoute111111";
+      const gmaps = "https://www.google.com/maps/dir";
+      function loadRoutesFromLocalStorage() {
+        let oldRoutes = "";
+        Object.keys(localStorage).map((k) => {
+          oldRoutes += '<a href="' + gmaps + localStorage.getItem(k) + '">' + k + "</a><br>";
         });
-      };
+        document.getElementById("prev").innerHTML = oldRoutes;
+      }
+      window.onload = loadRoutesFromLocalStorage;
+      function addCurLocation() {
+        navigator.geolocation.getCurrentPosition((position) => {
+          let oldPart = localStorage.getItem(tmpRoute) == null ? "" : localStorage.getItem(tmpRoute);
+          newPart = oldPart + "/" + position.coords.latitude + "," + position.coords.longitude;
+          document.getElementById("cur").innerHTML = '<a href="' + gmaps + newPart + '">Current Route</a>';
+          localStorage.setItem(tmpRoute, newPart);
+        });
+      }
+      function saveRoute() {
+        let routeName = document.getElementById("routename").value;
+        localStorage.setItem(routeName, newPart);
+        localStorage.removeItem(tmpRoute);
+        loadRoutesFromLocalStorage();
+      }
     </script>
   </body>
 </html>
