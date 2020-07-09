@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html>
   <body>
+    <p><a url="https://www.gpsvisualizer.com/convert_input">GPS Visualizer</a></p>
+    <p>Last Location</p>
+    <p id="last"></p>
     <p>Your Location</p>
-    <p id="loc"></p>
+    <p id="cur"></p>
     <script>
       window.onload = function () {
+        document.getElementById("last").innerHTML = localStorage.getItem("last");
         navigator.geolocation.getCurrentPosition((position) => {
-          document.getElementById("loc").innerHTML = "http://maps.google.com/maps?z=12&t=m&q=loc:" + position.coords.latitude + "+" + position.coords.longitude;
+          // Queryparams: https://stackoverflow.com/questions/2660201/what-parameters-should-i-use-in-a-google-maps-url-to-go-to-a-lat-lon/9919251#9919251
+          let url = "http://maps.google.com/maps?t=m&q=loc:" + position.coords.latitude + "+" + position.coords.longitude;
+          document.getElementById("cur").innerHTML = url;
+          localStorage.setItem("last", url);
         });
       };
     </script>
