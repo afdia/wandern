@@ -2,47 +2,82 @@
 <html>
   <head>
     <title>Routenplaner</title>
+    <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.min.js" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@latest/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-vue@latest/dist/bootstrap-vue.css" />
   </head>
-  <body>
-    <h1>Tools</h1>
-    <p>
-      <a href="https://www.gpsvisualizer.com/convert_input">GPS Visualizer</a>
-    </p>
 
-    <h1>Routes</h1>
-    <button onclick="addCurLocation()">Add Location</button>
-    <div>Current Route:</div>
-    <div id="prev"></div>
-    <div id="cur"></div>
-    <label for="routename">Route Name:</label>
-    <input type="text" id="routename" />
-    <button onclick="saveRoute()">Save Route</button>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.min.js"></script>
+    <div id="app">
+      <h1>Tools</h1>
+      <p>
+        <a href="https://www.gpsvisualizer.com/convert_input">GPS Visualizer</a>
+      </p>
+
+      <h1>Routes</h1>
+      <button @click="addCurLocation">Add Location</button>
+      <div>Current Route:</div>
+      <div v-for="(item, index) in prev"><button @click="deleteRoute(item,index)">delete</button><a style="margin-left: 1em;" :href="`${gmaps}${item.v}`">{{item.k}}</a><br /></div>
+      <br />
+      <div v-if="currentRoute !== ''"><a :href="`${gmaps}${currentRoute}`">{{curRoute}}</a></div>
+      <label for="routename">Route Name:</label>
+      <input type="text" id="routename" v-model="routeName" />
+      <button :disabled="saveDisabled" @click="saveRoute">Save Route</button>
+    </div>
     <script>
-      let newPart;
-      const tmpRoute = "activeRoute111111";
       const gmaps = "https://www.google.com/maps/dir";
-      function loadRoutesFromLocalStorage() {
-        let oldRoutes = "";
-        Object.keys(localStorage).map((k) => {
-          oldRoutes += '<a href="' + gmaps + localStorage.getItem(k) + '">' + k + "</a><br>";
-        });
-        document.getElementById("prev").innerHTML = oldRoutes;
-      }
-      window.onload = loadRoutesFromLocalStorage;
-      function addCurLocation() {
-        navigator.geolocation.getCurrentPosition((position) => {
-          let oldPart = localStorage.getItem(tmpRoute) == null ? "" : localStorage.getItem(tmpRoute);
-          newPart = oldPart + "/" + position.coords.latitude + "," + position.coords.longitude;
-          document.getElementById("cur").innerHTML = '<a href="' + gmaps + newPart + '">Current Route</a>';
-          localStorage.setItem(tmpRoute, newPart);
-        });
-      }
-      function saveRoute() {
-        let routeName = document.getElementById("routename").value;
-        localStorage.setItem(routeName, newPart);
-        localStorage.removeItem(tmpRoute);
-        loadRoutesFromLocalStorage();
-      }
+      const curRoute = "Current Route"; // key fuer aktuell entstehende route
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            prev: [],
+            currentRoute: "",
+            routeName: "",
+          };
+        },
+        computed: {
+          saveDisabled() {
+            return this.currentRoute === "" || this.routeName === "";
+          },
+        },
+        created() {
+          this.loadRoutesFromLocalStorage();
+        },
+        methods: {
+          addCurLocation() {
+            navigator.geolocation.getCurrentPosition((position) => {
+              let oldPart = localStorage.getItem(curRoute) == null ? "" : localStorage.getItem(curRoute);
+              this.currentRoute = oldPart + "/" + position.coords.latitude + "," + position.coords.longitude;
+              localStorage.setItem(curRoute, this.currentRoute);
+            });
+          },
+          saveRoute() {
+            localStorage.setItem(this.routeName, this.currentRoute);
+            this.currentRoute = "";
+            localStorage.removeItem(curRoute);
+            this.loadRoutesFromLocalStorage();
+          },
+          deleteRoute(item, index) {
+            if (confirm("Route " + item.k + " wirklich löschen?")) {
+              this.prev.splice(index, 1);
+              localStorage.removeItem(item.k);
+            }
+          },
+          loadRoutesFromLocalStorage() {
+            this.prev = [];
+            Object.keys(localStorage).map((k) => {
+              if (k == curRoute) {
+                this.currentRoute = localStorage.getItem(k);
+              } else {
+                this.prev.push({ k: k, v: localStorage.getItem(k) });
+              }
+            });
+          },
+        },
+      });
     </script>
   </body>
 </html>
