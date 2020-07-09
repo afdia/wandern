@@ -19,16 +19,17 @@
       <h1>Routes</h1>
       <button @click="addCurLocation">Add Location</button>
       <div>Current Route:</div>
-      <div v-for="(item, index) in prev"><button @click="deleteRoute(item,index)">delete</button><a style="margin-left: 1em;" :href="`${gmaps}${item.v}`">{{item.k}}</a><br /></div>
+      <div v-for="(item, index) in prev"><button @click="deleteRoute(item,index)">delete</button><a style="margin-left: 1em;" :href="`${gmaps}${item.v}`">{{item.k}} ({{countStops(item.v)}} Stops)</a><br /></div>
       <br />
-      <div v-if="currentRoute !== ''"><a :href="`${gmaps}${currentRoute}`">{{curRoute}}</a></div>
+      <div v-if="currentRoute !== ''"><a :href="`${gmaps}${currentRoute}`">{{currentRouteName}} ({{countStops(currentRoute)}} Stops)</a></div>
       <label for="routename">Route Name:</label>
       <input type="text" id="routename" v-model="routeName" />
       <button :disabled="saveDisabled" @click="saveRoute">Save Route</button>
+      <p style="color: red; font-size: 1.5em;" v-if="showAdded">ADDED STOP</p>
     </div>
     <script>
       const gmaps = "https://www.google.com/maps/dir";
-      const curRoute = "Current Route"; // key fuer aktuell entstehende route
+      const currentRouteName = "Current Route"; // key fuer aktuell entstehende route
       new Vue({
         el: "#app",
         data() {
@@ -36,6 +37,7 @@
             prev: [],
             currentRoute: "",
             routeName: "",
+            showAdded: false,
           };
         },
         computed: {
@@ -47,17 +49,23 @@
           this.loadRoutesFromLocalStorage();
         },
         methods: {
+          countStops(url) {
+            return url.split(",").length - 1;
+          },
           addCurLocation() {
             navigator.geolocation.getCurrentPosition((position) => {
-              let oldPart = localStorage.getItem(curRoute) == null ? "" : localStorage.getItem(curRoute);
-              this.currentRoute = oldPart + "/" + position.coords.latitude + "," + position.coords.longitude;
-              localStorage.setItem(curRoute, this.currentRoute);
+              let oldPart = localStorage.getItem(currentRouteName) == null ? "" : localStorage.getItem(currentRouteName);
+              let coordinates = position.coords.latitude + "," + position.coords.longitude;
+              this.currentRoute = oldPart + "/" + coordinates;
+              localStorage.setItem(currentRouteName, this.currentRoute);
+              this.showAdded = true;
+              setTimeout(() => (this.showAdded = false), 2000);
             });
           },
           saveRoute() {
             localStorage.setItem(this.routeName, this.currentRoute);
             this.currentRoute = "";
-            localStorage.removeItem(curRoute);
+            localStorage.removeItem(currentRouteName);
             this.loadRoutesFromLocalStorage();
           },
           deleteRoute(item, index) {
@@ -69,7 +77,7 @@
           loadRoutesFromLocalStorage() {
             this.prev = [];
             Object.keys(localStorage).map((k) => {
-              if (k == curRoute) {
+              if (k == currentRouteName) {
                 this.currentRoute = localStorage.getItem(k);
               } else {
                 this.prev.push({ k: k, v: localStorage.getItem(k) });
