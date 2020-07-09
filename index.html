@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 <html>
   <body>
-    <p><a url="https://www.gpsvisualizer.com/convert_input">GPS Visualizer</a></p>
-    <p>Last Location</p>
-    <p id="last"></p>
-    <p>Your Location</p>
+    <p><a href="https://www.gpsvisualizer.com/convert_input">GPS Visualizer</a></p>
+    <p>Route</p>
     <p id="cur"></p>
     <script>
       window.onload = function () {
-        document.getElementById("last").innerHTML = localStorage.getItem("last");
+        localStorage.getItem("route");
         navigator.geolocation.getCurrentPosition((position) => {
-          // Queryparams: https://stackoverflow.com/questions/2660201/what-parameters-should-i-use-in-a-google-maps-url-to-go-to-a-lat-lon/9919251#9919251
-          let url = "http://maps.google.com/maps?t=m&q=loc:" + position.coords.latitude + "+" + position.coords.longitude;
-          document.getElementById("cur").innerHTML = url;
-          localStorage.setItem("last", url);
+          let oldPart = localStorage.getItem("route") == null ? "" : localStorage.getItem("route");
+          let newPart = oldPart + "/" + position.coords.latitude + "," + position.coords.longitude;
+          let url = "https://www.google.com/maps/dir/" + newPart;
+          document.getElementById("cur").innerHTML = '<a href="' + url + '">GPS Visualizer</a>';
+          localStorage.setItem("route", newPart);
         });
       };
     </script>
