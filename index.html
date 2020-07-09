@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <p>Your Location</p>
+    <p id="loc"></p>
+    <script>
+      window.onload = function () {
+        navigator.geolocation.getCurrentPosition((position) => {
+          document.getElementById("loc").innerHTML = "http://maps.google.com/maps?z=12&t=m&q=loc:" + position.coords.latitude + "+" + position.coords.longitude;
+        });
+      };
+    </script>
+  </body>
+</html>
