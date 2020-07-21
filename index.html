@@ -17,34 +17,34 @@
       </p>
 
       <h1>Routes</h1>
-      <button @click="addCurLocation">Add Location</button>
-      <div>Current Route:</div>
       <div v-for="(item, index) in prev"><button @click="deleteRoute(item,index)">delete</button><a style="margin-left: 1em;" :href="`${gmaps}${item.v}`">{{item.k}} ({{countStops(item.v)}} Stops)</a><br /></div>
       <br />
-      <div v-if="currentRoute !== ''"><a :href="`${gmaps}${currentRoute}`">{{currentRouteName}} ({{countStops(currentRoute)}} Stops)</a></div>
+      <div v-if="currentRoute !== ''"><button @click="deleteCurrentRoute">delete</button><a :href="`${gmaps}${currentRoute}`">{{currentRouteName}} ({{countStops(currentRoute)}} Stops)</a></div>
       <label for="routename">Route Name:</label>
       <input type="text" id="routename" v-model="routeName" />
       <button :disabled="saveDisabled" @click="saveRoute">Save Route</button>
-      <p style="color: red; font-size: 1.5em;" v-if="showAdded">ADDED STOP</p>
-
-      <table style="width: 100%;">
+      <p style="color: red; font-size: 1.5em;" v-if="showAdded">Added Stop - {{addInfo}}</p>
+      <table style="text-align: center;">
         <tr>
-          <th>Timestamp</th>
-          <th>Lat</th>
-          <th>Long</th>
-          <th>Accuracy (Meters)</th>
-          <th>Speed</th>
+          <th>Time</th>
+          <th>Lat Long</th>
+          <th>Accuracy m</th>
+          <th>Speed km/h</th>
         </tr>
         <tr v-for="h in history">
-          <td>{{new Date(h.timestamp).toLocaleString()}}</td>
-          <td>{{h.coords.latitude}}</td>
-          <td>{{h.coords.longitude}}</td>
-          <td>{{h.coords.accuracy}}</td>
-          <td>{{h.coords.speed}}</td>
+          <td>{{new Date(h.timestamp).toLocaleTimeString()}} <button @click="addLocation(h)">Add</button></td>
+          <td>{{h.coords.latitude}} {{h.coords.longitude}}</td>
+          <td>{{h.coords.accuracy.toFixed(2)}}</td>
+          <td>{{(h.coords.speed * 3.6).toFixed(2)}}</td>
         </tr>
       </table>
     </div>
     <script>
+      const options = {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+      };
       const storagePrefix = "wandern.coordinates.";
       const gmaps = "https://www.google.com/maps/dir";
       const currentRouteName = "Current Route"; // key fuer aktuell entstehende route
@@ -57,6 +57,7 @@
             routeName: "",
             showAdded: false,
             history: [],
+            addInfo: "",
           };
         },
         computed: {
@@ -70,40 +71,41 @@
           navigator.geolocation.watchPosition(
             (position) => {
               this.history.unshift(position);
-              if (this.history.length > 10) {
+              if (this.history.length > 5) {
                 this.history.pop();
               }
             },
             () => {
-              alert("Keine Position verfügbar");
+              // ignore because only watch
             },
-            {
-              enableHighAccuracy: true,
-              maximumAge: 1000,
-              timeout: 100000,
-            }
+            options
           );
         },
         methods: {
           countStops(url) {
             return url.split(",").length - 1;
           },
-          addCurLocation() {
-            navigator.geolocation.getCurrentPosition((position) => {
-              let key = storagePrefix + currentRouteName;
-              let oldPart = localStorage.getItem(key) == null ? "" : localStorage.getItem(key);
-              let coordinates = position.coords.latitude + "," + position.coords.longitude;
-              this.currentRoute = oldPart + "/" + coordinates;
-              localStorage.setItem(key, this.currentRoute);
-              this.showAdded = true;
-              setTimeout(() => (this.showAdded = false), 2000);
-            });
+          addLocation(position) {
+            this.addInfo = "Accuracy m: " + position.coords.accuracy + "m, Speed km/h: " + position.coords.speed * 3.6 + "km/h";
+            let key = storagePrefix + currentRouteName;
+            let oldPart = localStorage.getItem(key) == null ? "" : localStorage.getItem(key);
+            let coordinates = position.coords.latitude + "," + position.coords.longitude;
+            this.currentRoute = oldPart + "/" + coordinates;
+            localStorage.setItem(key, this.currentRoute);
+            this.showAdded = true;
+            setTimeout(() => (this.showAdded = false), 8000);
           },
           saveRoute() {
             localStorage.setItem(storagePrefix + this.routeName, this.currentRoute);
             this.currentRoute = "";
             localStorage.removeItem(storagePrefix + currentRouteName);
             this.loadRoutesFromLocalStorage();
+          },
+          deleteCurrentRoute() {
+            if (confirm("Aktuelle Route wirklich löschen?")) {
+              this.currentRoute = "";
+              localStorage.removeItem(storagePrefix + currentRouteName);
+            }
           },
           deleteRoute(item, index) {
             if (confirm("Route " + item.k + " wirklich löschen?")) {
