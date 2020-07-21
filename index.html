@@ -26,6 +26,23 @@
       <input type="text" id="routename" v-model="routeName" />
       <button :disabled="saveDisabled" @click="saveRoute">Save Route</button>
       <p style="color: red; font-size: 1.5em;" v-if="showAdded">ADDED STOP</p>
+
+      <table style="width: 100%;">
+        <tr>
+          <th>Timestamp</th>
+          <th>Lat</th>
+          <th>Long</th>
+          <th>Accuracy (Meters)</th>
+          <th>Speed</th>
+        </tr>
+        <tr v-for="h in history">
+          <td>{{new Date(h.timestamp).toLocaleString()}}</td>
+          <td>{{h.coords.latitude}}</td>
+          <td>{{h.coords.longitude}}</td>
+          <td>{{h.coords.accuracy}}</td>
+          <td>{{h.coords.speed}}</td>
+        </tr>
+      </table>
     </div>
     <script>
       const storagePrefix = "wandern.coordinates.";
@@ -39,6 +56,7 @@
             currentRoute: "",
             routeName: "",
             showAdded: false,
+            history: [],
           };
         },
         computed: {
@@ -48,6 +66,23 @@
         },
         created() {
           this.loadRoutesFromLocalStorage();
+
+          navigator.geolocation.watchPosition(
+            (position) => {
+              this.history.unshift(position);
+              if (this.history.length > 10) {
+                this.history.pop();
+              }
+            },
+            () => {
+              alert("Keine Position verfügbar");
+            },
+            {
+              enableHighAccuracy: true,
+              maximumAge: 1000,
+              timeout: 100000,
+            }
+          );
         },
         methods: {
           countStops(url) {
