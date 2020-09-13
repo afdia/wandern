@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Routenplaner</title>
+    <link rel="icon" href="data:,"> <!-- no favicon -->
     <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.min.js" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@latest/dist/css/bootstrap.min.css" />
@@ -48,7 +49,7 @@
           }).catch(function (err) {
             console.log('Cannot register ServiceWorker', err);
           });
-        }
+        });
       }
       const options = {
         enableHighAccuracy: true,
